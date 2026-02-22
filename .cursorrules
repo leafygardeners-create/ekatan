@@ -1,0 +1,65 @@
+# EKATAN — Coding Standards & Mandates
+
+## Project Identity
+
+EKATAN is a premium, tech-first residential interior design and execution ERP for the Indian market. This codebase is the single source of truth; all code must be production-ready with no placeholders.
+
+---
+
+## Modular Architecture (Non-Negotiable)
+
+- Use the folder structure: `src/core/`, `src/shared/`, `src/features/`.
+- **Features MUST NOT import from other features**; they may import only from `core/` and `shared/`.
+- App routes under `app/` are thin orchestration layers; business logic lives in feature modules.
+- Each feature owns: `actions/`, `components/`, `types/`, `utils/` (or `hooks/`).
+- Server Actions live in `features/{feature}/actions/`; app pages call them.
+- Shared types/interfaces go in `shared/types/`; feature-specific types stay inside the feature.
+
+---
+
+## Tech Stack Mandates
+
+- **Framework:** Next.js 15+ App Router exclusively. All backend logic via Server Actions; no API routes for database access.
+- **Backend & Auth:** Supabase (PostgreSQL + Auth). All database interactions must be server-side only.
+- **Styling:** Tailwind CSS, Framer Motion (animations), and Shadcn/UI. No other UI libraries.
+- **Language:** TypeScript strict mode. No `any`; explicit interfaces for all data shapes.
+
+---
+
+## Route Groups Architecture (Non-Negotiable)
+
+The application is structured using Next.js Route Groups to isolate six portals. Each group MUST have its own `layout.tsx` with role-gated middleware/checks.
+
+| Route Group        | Purpose                                      | URL Prefix Example |
+|--------------------|----------------------------------------------|--------------------|
+| `app/(public)/`    | Marketing website                            | `/`                |
+| `app/(customer)/`  | Visual Cart & quote approval                 | `/cart`, `/quote`  |
+| `app/(admin)/`     | Catalog, zones, global settings              | `/admin`           |
+| `app/(designer)/`  | Designer quote builder                       | `/designer`        |
+| `app/(supervisor)/`| Mobile BOM & Snags for site PMs              | `/supervisor`      |
+| `app/(analytics)/` | Financial projections & zone performance     | `/analytics`       |
+
+---
+
+## Database & Auth Rules
+
+- **Zero direct Supabase client calls from client components for mutations.** All writes go through Server Actions.
+- RBAC is enforced at layout level; redirect unauthorized roles before rendering protected content.
+- All Server Actions must validate `auth.getUser()` (or equivalent) before performing any database operation.
+
+---
+
+## Security Mandates
+
+- **Input validation:** Use Zod schemas for ALL Server Action inputs; reject invalid payloads.
+- **Secrets:** Never expose `SUPABASE_SERVICE_ROLE_KEY` to the client; use only in server context (Server Actions, API routes if any, server components).
+- **SQL:** No raw SQL with user input; use only parameterized Supabase client queries.
+- **XSS:** Sanitize user-generated content before render. React escapes by default; for HTML or rich text use DOMPurify or similar.
+
+---
+
+## Code Quality
+
+- **NO placeholder code.** Do not use `// TODO`, `// add logic here`, or similar; all implementations must be complete and production-ready.
+- **Components:** Shared components in `shared/components/`; feature-specific components in `features/{feature}/components/`.
+- **Environment variables:** Use `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for client-safe values; `SUPABASE_SERVICE_ROLE_KEY` must be server-only and never prefixed with `NEXT_PUBLIC_`.
